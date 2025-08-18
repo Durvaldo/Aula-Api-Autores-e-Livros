@@ -13,25 +13,6 @@ Esta documentação detalha as regras de negócio que devem ser implementadas na
 - **Resposta esperada**: Status `409 Conflict`
 - **Implementação sugerida**:
 
-```php
-public function destroy($id)
-{
-    $author = Author::findOrFail($id);
-    
-    // Verifica se o autor tem livros
-    if ($author->books()->count() > 0) {
-        return response()->json([
-            'message' => 'Não é possível excluir autor que possui livros associados.',
-            'status' => 409
-        ], 409);
-    }
-    
-    $author->delete();
-    
-    return response()->noContent();
-}
-```
-
 ### 2. **Busca e Filtros**
 
 **✅ Busca por nome do autor**
@@ -40,17 +21,6 @@ public function destroy($id)
 - **Comportamento**: Busca parcial (LIKE %termo%)
 - **Case sensitive**: Não
 - **Implementação**: Use o scope `search()` no Model
-
-```php
-// No Controller
-$authors = Author::search($request->q)->paginate();
-
-// Scope já implementado no Model:
-public function scopeSearch($query, $term)
-{
-    return $query->where('nome', 'like', "%{$term}%");
-}
-```
 
 ## 📖 **Regras para Livros**
 
@@ -61,20 +31,6 @@ public function scopeSearch($query, $term)
 - **Validação**: Já implementada no `StoreBookRequest`
 - **Resposta**: Status `409 Conflict` (tratado automaticamente)
 - **Exemplo**:
-
-```json
-// Se tentar criar:
-{
-  "titulo": "Dom Casmurro", // Já existe
-  "autor_id": 1            // Para o mesmo autor
-}
-
-// Retorna:
-{
-  "message": "Já existe um livro com este título para o mesmo autor.",
-  "status": 409
-}
-```
 
 ### 2. **Relacionamento com Autor**
 
@@ -87,33 +43,6 @@ public function scopeSearch($query, $term)
 ### 3. **Filtros Avançados**
 
 **✅ Sistema de filtros múltiplos**
-
-```php
-// Exemplo de implementação no Controller:
-public function index(Request $request)
-{
-    $books = Book::query()
-        ->when($request->q, function($query, $term) {
-            $query->search($term);
-        })
-        ->when($request->author_id, function($query, $authorId) {
-            $query->byAuthor($authorId);
-        })
-        ->when($request->has('disponivel'), function($query) use ($request) {
-            $query->byAvailability($request->boolean('disponivel'));
-        })
-        ->when($request->ano_de, function($query, $year) {
-            $query->byYearRange($year, null);
-        })
-        ->when($request->ano_ate, function($query, $year) {
-            $query->byYearRange(null, $year);
-        })
-        ->orderBy($request->sort ?? 'titulo')
-        ->paginate($request->per_page ?? 15);
-        
-    return new PaginatedResource(BookResource::collection($books));
-}
-```
 
 **Filtros disponíveis:**
 - `q` - Busca em título e gênero
@@ -188,21 +117,6 @@ $page = max(1, $request->page ?? 1);
 - `created_at`
 - `updated_at`
 
-**Implementação sugerida:**
-```php
-// Use os scopes nos Models:
-$authors = Author::orderBy($request->sort ?? 'nome')->paginate();
-
-// Scope já implementado:
-public function scopeOrderBy($query, $field = 'nome', $direction = 'asc')
-{
-    $allowedFields = ['nome', 'created_at', 'updated_at'];
-    $field = in_array($field, $allowedFields) ? $field : 'nome';
-    
-    return $query->orderBy($field, $direction);
-}
-```
-
 ## 🧪 **Testes de Regras de Negócio**
 
 O sistema de testes automatizados verifica:
@@ -213,7 +127,7 @@ O sistema de testes automatizados verifica:
 2. ✅ Criar livro para o autor
 3. ❌ Tentar excluir autor → Deve retornar 409
 4. ✅ Excluir livro primeiro
-5. ✅ Excluir autor → Deve retornar 204
+5. ✅ Excluir autor → Deve retornar 200
 
 ### **Teste: Título Duplicado**
 
@@ -225,43 +139,6 @@ O sistema de testes automatizados verifica:
 
 1. ✅ `?q=romance&disponivel=true&ano_de=1800&ano_ate=1900`
 2. ✅ Verificar se apenas livros que atendem TODOS os critérios são retornados
-
-## 💡 **Dicas de Implementação**
-
-### 1. **Use Transaction para operações críticas**
-
-```php
-use Illuminate\Support\Facades\DB;
-
-DB::transaction(function () use ($data) {
-    // Operações que precisam ser atômicas
-});
-```
-
-### 2. **Eager Loading para performance**
-
-```php
-// Carrega autor junto com livros em uma query
-$books = Book::with('author')->paginate();
-
-// Para o endpoint /authors/{id}/books
-$author = Author::with('books')->findOrFail($id);
-return new PaginatedResource(BookResource::collection($author->books));
-```
-
-### 3. **Validação de Business Rules**
-
-```php
-// Além das validações dos Form Requests,
-// adicione validações de negócio nos Controllers:
-
-if ($author->books()->count() > 0) {
-    return response()->json([
-        'message' => 'Regra de negócio violada',
-        'status' => 409
-    ], 409);
-}
-```
 
 ## 🎓 **Critérios de Avaliação**
 
