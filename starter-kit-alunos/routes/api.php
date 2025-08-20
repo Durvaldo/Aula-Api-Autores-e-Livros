@@ -11,17 +11,17 @@ use App\Models\Book;
  * 📋 Rotas esperadas após implementação:
  * 
  * Autores:
- * GET    /api/authors          - Listar autores (index)
- * POST   /api/authors          - Criar autor (store) 
- * GET    /api/authors/{id}     - Buscar autor (show)
- * PUT    /api/authors/{id}     - Atualizar autor (update)
- * DELETE /api/authors/{id}     - Excluir autor (destroy)
- * GET    /api/authors/{id}/books - Livros do autor (books)
+ * GET    /authors              - Listar autores (index)
+ * POST   /authors              - Criar autor (store) 
+ * GET    /authors/{id}         - Buscar autor (show)
+ * PUT    /authors/{id}         - Atualizar autor (update)
+ * DELETE /authors/{id}         - Excluir autor (destroy)
+ * GET    /authors/{id}/books   - Livros do autor (books)
  * 
  * Livros:
- * GET    /api/books            - Listar livros (index)
- * POST   /api/books            - Criar livro (store)
- * GET    /api/books/{id}       - Buscar livro (show) 
- * PUT    /api/books/{id}       - Atualizar livro (update)
- * DELETE /api/books/{id}       - Excluir livro (destroy)
+ * GET    /books                - Listar livros (index)
+ * POST   /books                - Criar livro (store)
+ * GET    /books/{id}           - Buscar livro (show) 
+ * PUT    /books/{id}           - Atualizar livro (update)
+ * DELETE /books/{id}           - Excluir livro (destroy)
  */
