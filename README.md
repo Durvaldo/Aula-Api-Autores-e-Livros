@@ -16,8 +16,8 @@ Implementar uma API RESTful completa com:
 
 ### 1. Criar novo projeto Laravel
 ```bash
-composer create-project laravel/laravel biblioteca-api
-cd biblioteca-api
+composer create-project laravel/laravel biblioteca-backend "9.*"
+cd biblioteca-backend
 ```
 
 ### 2. Copiar arquivos do starter kit
