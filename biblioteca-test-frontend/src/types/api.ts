@@ -21,20 +21,7 @@ export interface Book {
   atualizado_em: string;
 }
 
-export interface PaginatedResponse<T> {
-  data: T[];
-  meta: {
-    page: number;
-    per_page: number;
-    total: number;
-    total_pages: number;
-  };
-  links: {
-    self: string;
-    next: string | null;
-    prev: string | null;
-  };
-}
+// Não há mais paginação - API retorna arrays diretos
 
 export interface ApiError {
   message: string;

@@ -37,8 +37,8 @@ export class BookTests {
       if (response.status === 200) {
         const data = response.data;
         
-        // Verifica estrutura de resposta
-        if (data.data && data.meta && data.links) {
+        // Verifica se é um array de livros
+        if (Array.isArray(data)) {
           this.addResult({
             endpoint: '/api/books',
             method: 'GET',
@@ -55,7 +55,7 @@ export class BookTests {
             status: 'fail',
             score: 5,
             maxScore: 15,
-            message: 'Estrutura de resposta incorreta (faltando data, meta ou links)',
+            message: 'Estrutura de resposta incorreta (esperado: array de livros)',
             response: data
           });
         }
@@ -82,20 +82,44 @@ export class BookTests {
       });
     }
 
-    // Teste 2: Filtro por autor
+    // Teste 2: Verificar se contém campos obrigatórios
     try {
-      const response = await this.client.getBooks({ author_id: 1 });
+      const response = await this.client.getBooks();
       
-      if (response.status === 200) {
-        this.addResult({
-          endpoint: '/api/books',
-          method: 'GET',
-          status: 'pass',
-          score: 10,
-          maxScore: 10,
-          message: 'Filtro por author_id funcionando',
-          request: { author_id: 1 }
-        });
+      if (response.status === 200 && Array.isArray(response.data)) {
+        if (response.data.length > 0) {
+          const book = response.data[0];
+          if (book.id && book.titulo && book.autor_id !== undefined) {
+            this.addResult({
+              endpoint: '/api/books',
+              method: 'GET',
+              status: 'pass',
+              score: 10,
+              maxScore: 10,
+              message: 'Estrutura de livro contém campos obrigatórios',
+              response: { sample: book }
+            });
+          } else {
+            this.addResult({
+              endpoint: '/api/books',
+              method: 'GET',
+              status: 'fail',
+              score: 0,
+              maxScore: 10,
+              message: 'Estrutura de livro faltando campos obrigatórios (id, titulo, autor_id)',
+              response: { sample: book }
+            });
+          }
+        } else {
+          this.addResult({
+            endpoint: '/api/books',
+            method: 'GET',
+            status: 'pass',
+            score: 10,
+            maxScore: 10,
+            message: 'Lista vazia de livros retornada corretamente'
+          });
+        }
       }
     } catch (error: any) {
       this.addResult({
@@ -104,61 +128,7 @@ export class BookTests {
         status: 'fail',
         score: 0,
         maxScore: 10,
-        message: 'Erro ao testar filtro por autor',
-        error: error.message
-      });
-    }
-
-    // Teste 3: Filtro por disponibilidade
-    try {
-      const response = await this.client.getBooks({ disponivel: true });
-      
-      if (response.status === 200) {
-        this.addResult({
-          endpoint: '/api/books',
-          method: 'GET',
-          status: 'pass',
-          score: 10,
-          maxScore: 10,
-          message: 'Filtro por disponibilidade funcionando',
-          request: { disponivel: true }
-        });
-      }
-    } catch (error: any) {
-      this.addResult({
-        endpoint: '/api/books',
-        method: 'GET',
-        status: 'fail',
-        score: 0,
-        maxScore: 10,
-        message: 'Erro ao testar filtro por disponibilidade',
-        error: error.message
-      });
-    }
-
-    // Teste 4: Filtro por faixa de anos
-    try {
-      const response = await this.client.getBooks({ ano_de: 1800, ano_ate: 2000 });
-      
-      if (response.status === 200) {
-        this.addResult({
-          endpoint: '/api/books',
-          method: 'GET',
-          status: 'pass',
-          score: 10,
-          maxScore: 10,
-          message: 'Filtro por faixa de anos funcionando',
-          request: { ano_de: 1800, ano_ate: 2000 }
-        });
-      }
-    } catch (error: any) {
-      this.addResult({
-        endpoint: '/api/books',
-        method: 'GET',
-        status: 'fail',
-        score: 0,
-        maxScore: 10,
-        message: 'Erro ao testar filtro por faixa de anos',
+        message: 'Erro ao verificar estrutura de livros',
         error: error.message
       });
     }

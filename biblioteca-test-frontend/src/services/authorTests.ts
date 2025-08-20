@@ -122,8 +122,8 @@ SOLUÇÕES GERAIS:
       if (response.status === 200) {
         const data = response.data;
         
-        // Verifica estrutura de resposta
-        if (data.data && data.meta && data.links) {
+        // Verifica se é um array de autores
+        if (Array.isArray(data)) {
           this.addResult({
             endpoint: '/api/authors',
             method: 'GET',
@@ -140,30 +140,17 @@ SOLUÇÕES GERAIS:
             status: 'fail',
             score: 0,
             maxScore: 15,
-            message: 'Estrutura de resposta incorreta (faltando data, meta ou links)',
+            message: 'Estrutura de resposta incorreta (esperado: array de autores)',
             response: data,
-            expected: {
-              data: [
-                {
-                  id: "number",
-                  nome: "string",
-                  bio: "string|null",
-                  criado_em: "timestamp",
-                  atualizado_em: "timestamp"
-                }
-              ],
-              meta: {
-                page: "number",
-                per_page: "number", 
-                total: "number",
-                total_pages: "number"
-              },
-              links: {
-                self: "string",
-                next: "string|null",
-                prev: "string|null"
+            expected: [
+              {
+                id: "number",
+                nome: "string",
+                bio: "string|null",
+                criado_em: "timestamp",
+                atualizado_em: "timestamp"
               }
-            }
+            ]
           });
         }
       } else {
@@ -192,32 +179,42 @@ SOLUÇÕES GERAIS:
       });
     }
 
-    // Teste 2: Paginação
+    // Teste 2: Verificar se contém campos obrigatórios
     try {
-      const response = await this.client.getAuthors({ page: 1, per_page: 5 });
+      const response = await this.client.getAuthors();
       
-      if (response.status === 200 && response.data.meta) {
-        const meta = response.data.meta;
-        if (meta.page === 1 && meta.per_page === 5) {
+      if (response.status === 200 && Array.isArray(response.data)) {
+        if (response.data.length > 0) {
+          const author = response.data[0];
+          if (author.id && author.nome) {
+            this.addResult({
+              endpoint: '/api/authors',
+              method: 'GET',
+              status: 'pass',
+              score: 10,
+              maxScore: 10,
+              message: 'Estrutura de autor contém campos obrigatórios',
+              response: { sample: author }
+            });
+          } else {
+            this.addResult({
+              endpoint: '/api/authors',
+              method: 'GET',
+              status: 'fail',
+              score: 0,
+              maxScore: 10,
+              message: 'Estrutura de autor faltando campos obrigatórios (id, nome)',
+              response: { sample: author }
+            });
+          }
+        } else {
           this.addResult({
             endpoint: '/api/authors',
             method: 'GET',
             status: 'pass',
             score: 10,
             maxScore: 10,
-            message: 'Paginação funcionando corretamente',
-            request: { page: 1, per_page: 5 }
-          });
-        } else {
-          this.addResult({
-            endpoint: '/api/authors',
-            method: 'GET',
-            status: 'fail',
-            score: 0,
-            maxScore: 10,
-            message: 'Parâmetros de paginação não aplicados corretamente',
-            request: { page: 1, per_page: 5 },
-            response: meta
+            message: 'Lista vazia retornada corretamente'
           });
         }
       }
@@ -228,142 +225,7 @@ SOLUÇÕES GERAIS:
         status: 'fail',
         score: 0,
         maxScore: 10,
-        message: 'Erro ao testar paginação',
-        error: error.message
-      });
-    }
-
-    // Teste 3: Busca por nome
-    try {
-      const response = await this.client.getAuthors({ q: 'teste' });
-      
-      if (response.status === 200) {
-        this.addResult({
-          endpoint: '/api/authors',
-          method: 'GET',
-          status: 'pass',
-          score: 10,
-          maxScore: 10,
-          message: 'Busca por nome funcionando',
-          request: { q: 'teste' }
-        });
-      }
-    } catch (error: any) {
-      this.addResult({
-        endpoint: '/api/authors',
-        method: 'GET',
-        status: 'fail',
-        score: 0,
-        maxScore: 10,
-        message: 'Erro ao testar busca por nome',
-        error: error.message
-      });
-    }
-
-    // Teste 4: Ordenação
-    try {
-      const response = await this.client.getAuthors({ sort: 'nome' });
-      
-      if (response.status === 200) {
-        this.addResult({
-          endpoint: '/api/authors',
-          method: 'GET',
-          status: 'pass',
-          score: 10,
-          maxScore: 10,
-          message: 'Ordenação funcionando',
-          request: { sort: 'nome' }
-        });
-      }
-    } catch (error: any) {
-      this.addResult({
-        endpoint: '/api/authors',
-        method: 'GET',
-        status: 'fail',
-        score: 0,
-        maxScore: 10,
-        message: 'Erro ao testar ordenação',
-        error: error.message
-      });
-    }
-
-    // Teste 5: Parâmetros de paginação extremos
-    try {
-      const response = await this.client.getAuthors({ page: -1, per_page: 1000 });
-      
-      if (response.status === 200 && response.data.meta) {
-        const meta = response.data.meta;
-        // Sistema deve normalizar valores inválidos
-        if (meta.page >= 1 && meta.per_page <= 100) {
-          this.addResult({
-            endpoint: '/api/authors',
-            method: 'GET',
-            status: 'pass',
-            score: 10,
-            maxScore: 10,
-            message: 'Normalização de parâmetros extremos funcionando',
-            request: { page: -1, per_page: 1000 },
-            response: { normalized_page: meta.page, normalized_per_page: meta.per_page }
-          });
-        } else {
-          this.addResult({
-            endpoint: '/api/authors',
-            method: 'GET',
-            status: 'fail',
-            score: 0,
-            maxScore: 10,
-            message: 'Sistema não normaliza parâmetros extremos adequadamente',
-            request: { page: -1, per_page: 1000 },
-            response: meta,
-            expected: 'page >= 1 e per_page <= 100'
-          });
-        }
-      } else {
-        this.addResult({
-          endpoint: '/api/authors',
-          method: 'GET',
-          status: 'fail',
-          score: 0,
-          maxScore: 10,
-          message: 'Erro ao testar parâmetros extremos',
-          request: { page: -1, per_page: 1000 }
-        });
-      }
-    } catch (error: any) {
-      this.addResult({
-        endpoint: '/api/authors',
-        method: 'GET',
-        status: 'fail',
-        score: 0,
-        maxScore: 10,
-        message: 'Erro ao testar parâmetros de paginação extremos',
-        error: error.message
-      });
-    }
-
-    // Teste 6: Busca com caracteres especiais
-    try {
-      const response = await this.client.getAuthors({ q: '!@#$%^&*()' });
-      
-      if (response.status === 200) {
-        this.addResult({
-          endpoint: '/api/authors',
-          method: 'GET',
-          status: 'pass',
-          score: 5,
-          maxScore: 5,
-          message: 'Busca com caracteres especiais funcionando',
-          request: { q: '!@#$%^&*()' }
-        });
-      }
-    } catch (error: any) {
-      this.addResult({
-        endpoint: '/api/authors',
-        method: 'GET',
-        status: 'fail',
-        score: 0,
-        maxScore: 5,
-        message: 'Erro ao buscar com caracteres especiais',
+        message: 'Erro ao verificar estrutura de autores',
         error: error.message
       });
     }
@@ -897,7 +759,7 @@ SOLUÇÕES GERAIS:
       
       if (response.status === 200) {
         const data = response.data;
-        if (data.data && data.meta && data.links) {
+        if (Array.isArray(data)) {
           this.addResult({
             endpoint: `/api/authors/${testId}/books`,
             method: 'GET',
@@ -914,7 +776,7 @@ SOLUÇÕES GERAIS:
             status: 'fail',
             score: 0,
             maxScore: 15,
-            message: 'Estrutura de resposta incorreta para livros do autor',
+            message: 'Estrutura de resposta incorreta para livros do autor (esperado: array)',
             response: data
           });
         }

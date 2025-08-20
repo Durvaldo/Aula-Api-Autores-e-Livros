@@ -20,7 +20,7 @@ export class TestRunner {
       
       // Teste de conexão mais detalhado
       try {
-        await this.client.getAuthors({ per_page: 1 });
+        await this.client.getAuthors();
         onProgress?.(5, 'Conexão bem-sucedida! API respondendo...');
       } catch (error: any) {
         // Analisa o tipo de erro de conexão

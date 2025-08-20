@@ -1,6 +1,6 @@
 import axios from 'axios';
 import type { AxiosInstance, AxiosResponse } from 'axios';
-import type { Author, Book, PaginatedResponse } from '../types/api';
+import type { Author, Book } from '../types/api';
 
 export class ApiClient {
   private client: AxiosInstance;
@@ -17,13 +17,8 @@ export class ApiClient {
   }
 
   // Authors endpoints
-  async getAuthors(params?: {
-    q?: string;
-    page?: number;
-    per_page?: number;
-    sort?: string;
-  }): Promise<AxiosResponse<PaginatedResponse<Author>>> {
-    return this.client.get('/api/authors', { params });
+  async getAuthors(): Promise<AxiosResponse<Author[]>> {
+    return this.client.get('/api/authors');
   }
 
   async createAuthor(data: { nome: string; bio?: string }): Promise<AxiosResponse<Author>> {
@@ -42,26 +37,13 @@ export class ApiClient {
     return this.client.delete(`/api/authors/${id}`);
   }
 
-  async getAuthorBooks(id: number, params?: {
-    page?: number;
-    per_page?: number;
-    sort?: string;
-  }): Promise<AxiosResponse<PaginatedResponse<Book>>> {
-    return this.client.get(`/api/authors/${id}/books`, { params });
+  async getAuthorBooks(id: number): Promise<AxiosResponse<Book[]>> {
+    return this.client.get(`/api/authors/${id}/books`);
   }
 
   // Books endpoints
-  async getBooks(params?: {
-    q?: string;
-    author_id?: number;
-    disponivel?: boolean;
-    ano_de?: number;
-    ano_ate?: number;
-    page?: number;
-    per_page?: number;
-    sort?: string;
-  }): Promise<AxiosResponse<PaginatedResponse<Book>>> {
-    return this.client.get('/api/books', { params });
+  async getBooks(): Promise<AxiosResponse<Book[]>> {
+    return this.client.get('/api/books');
   }
 
   async createBook(data: {
@@ -97,7 +79,7 @@ export class ApiClient {
   // Utility method to test if API is reachable
   async testConnection(): Promise<boolean> {
     try {
-      await this.client.get('/api/authors?per_page=1');
+      await this.client.get('/api/authors');
       return true;
     } catch {
       return false;
